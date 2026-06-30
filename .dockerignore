@@ -1,0 +1,28 @@
+# Keep the Docker build context (and HF Space upload) small and fast.
+.git
+.venv
+venv
+env
+node_modules
+package-lock.json
+package.json
+
+# Python caches
+__pycache__
+*.pyc
+.pytest_cache
+.coverage
+htmlcov
+
+# Local-only
+.backup
+.streamlit/secrets.toml
+*.log
+.DS_Store
+
+# Heavy artifacts not needed at runtime
+report
+notebooks
+tests
+.env
+.env.local
