@@ -166,15 +166,20 @@ pip install -r requirements.txt
 # 3. (Optional) Retrain models — pre-trained artifacts already in models/
 python scripts/train.py
 
-# 4. Start the API backend
-uvicorn src.api.main:app --reload
-# → API docs at http://localhost:8000/docs
-
-# 5. Start the dashboard (separate terminal)
+# 4. Run the dashboard standalone (scores models in-process — no API needed)
 streamlit run dashboard/app.py
 # → Dashboard at http://localhost:8501
 
-# 6. Run tests
+# --- OR, the two-service setup (FastAPI backend + dashboard) ---
+
+# 4a. Start the API backend
+uvicorn src.api.main:app --reload
+# → API docs at http://localhost:8000/docs
+
+# 4b. Start the dashboard pointed at the API (separate terminal)
+SPIKE_SENSE_API_URL=http://localhost:8000 streamlit run dashboard/app.py
+
+# 5. Run tests
 pytest
 ```
 
@@ -182,25 +187,41 @@ pytest
 
 ## Deployment
 
-### API → Render.com (free tier)
+The dashboard supports two deployment modes, selected automatically by whether
+the `SPIKE_SENSE_API_URL` environment variable is set:
+
+- **Single-service (recommended for demos)** — the dashboard scores the IF +
+  LSTM models in-process (`dashboard/local_scoring.py`). One URL, no backend to
+  sleep or cold-start. Used when `SPIKE_SENSE_API_URL` is **unset**.
+- **Two-service** — a separate FastAPI backend handles scoring and the
+  dashboard calls it over HTTP. Used when `SPIKE_SENSE_API_URL` **is** set.
+
+### Single-service → Streamlit Community Cloud (one free URL)
 
 1. Push repo to GitHub
-2. Create a new **Web Service** on [render.com](https://render.com)
-3. Connect your GitHub repo — Render auto-detects `render.yaml`
-4. Add environment variable `DISCORD_WEBHOOK_URL` in the Render dashboard
-5. Deploy — API will be live at `https://spike-sense.onrender.com`
+2. Go to [share.streamlit.io](https://share.streamlit.io) and sign in with GitHub
+3. **New app** → select this repo, branch `main`
+4. Set **Main file path** to `dashboard/app.py`
+   *(Streamlit auto-detects `requirements-dashboard.txt`, which includes
+   `tensorflow-cpu` for in-process scoring.)*
+5. Under **Advanced settings**, set **Python version** to `3.11`
+6. **Do not** set `SPIKE_SENSE_API_URL` — leaving it unset enables in-process
+   scoring (no separate backend needed)
+7. Deploy — dashboard will be live at `https://<app-name>.streamlit.app`
 
-> **Note:** Render's free tier spins down after 15 minutes of inactivity.
-> Hit `/health` once before a live demo to wake the service.
+### Two-service (optional) → Render.com + Streamlit Cloud
 
-### Dashboard → Streamlit Community Cloud
+Deploy the API separately and point the dashboard at it:
 
-1. Go to [share.streamlit.io](https://share.streamlit.io)
-2. Connect your GitHub repo
-3. Set **Main file path** to `dashboard/app.py`
-4. Set **Requirements file** to `requirements-dashboard.txt`
-5. Add `SPIKE_SENSE_API_URL=https://spike-sense.onrender.com` in Secrets
-6. Deploy — dashboard will be live at `https://spike-sense.streamlit.app`
+1. Create a **Web Service** on [render.com](https://render.com) — it auto-detects
+   `render.yaml`. Add `DISCORD_WEBHOOK_URL` in the Render dashboard if you want
+   live alerts. API goes live at e.g. `https://spike-sense.onrender.com`.
+2. Deploy the dashboard to Streamlit Cloud as above, but **add**
+   `SPIKE_SENSE_API_URL=https://spike-sense.onrender.com` in Secrets.
+
+> **Note:** Render's free tier spins down after 15 minutes of inactivity (≈50s
+> cold start) and is memory-constrained for TensorFlow — which is why the
+> single-service mode above is recommended for demos.
 
 ---
 
