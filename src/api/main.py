@@ -238,12 +238,65 @@ def predict_batch(req: BatchPredictRequest) -> BatchPredictResponse:
     """Score multiple windows in a single call.
 
     Useful for the dashboard to score a full time-series in one request.
+
+    Scoring is fully vectorised: every window is scaled, feature-extracted and
+    run through both models in one batched pass each (one IF call, one LSTM
+    forward pass), rather than looping per window. This turns a ~4k-window
+    series scan from minutes into ~1s. Batch scoring is an exploratory scan, so
+    it does not persist or alert per window — that would flood the history.
+    Single /predict and /demo/inject-spike persist.
     """
     _require_models()
-    # Batch scoring is an exploratory/visualisation scan (the dashboard scores a
-    # whole series at once), so it does not persist or alert per window — that
-    # would flood the history. Single /predict and /demo/inject-spike persist.
-    predictions = [_score_window(w, req.series_key, persist=False) for w in req.windows]
+
+    from src.data.preprocessor import _extract_window_features
+    from src.models import isolation_forest as if_module
+    from src.models import lstm_autoencoder as lstm_module
+
+    expected = model_registry.window_size
+
+    if not req.windows:
+        return BatchPredictResponse(
+            predictions=[], n_windows=0,
+            n_anomalies_union=0, n_anomalies_lstm=0, n_anomalies_if=0,
+        )
+
+    raw = np.array(req.windows, dtype=np.float64)
+    if raw.ndim != 2 or raw.shape[1] != expected:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Each window must have length {expected}; got shape {raw.shape}.",
+        )
+
+    scaler = model_registry.get_scaler(req.series_key)
+    # Scale all values at once, then restore (n_windows, window_size) shape.
+    scaled = scaler.transform(raw.reshape(-1, 1)).reshape(raw.shape).astype(np.float32)
+
+    features, _ = _extract_window_features(scaled)
+    windows_3d = scaled[:, :, np.newaxis]
+
+    if_scores = if_module.score(model_registry.if_model, features)
+    if_preds = if_module.predict(model_registry.if_model, features)
+    lstm_errors = lstm_module.score(model_registry.lstm_model, windows_3d)
+    lstm_preds = lstm_module.predict(
+        model_registry.lstm_model, windows_3d, model_registry.lstm_threshold
+    )
+
+    predictions = []
+    for i in range(len(req.windows)):
+        if_pred = bool(if_preds[i])
+        lstm_pred = bool(lstm_preds[i])
+        predictions.append(PredictResponse(
+            if_anomaly=if_pred,
+            lstm_anomaly=lstm_pred,
+            combined_union=if_pred or lstm_pred,
+            combined_intersection=if_pred and lstm_pred,
+            scores=ModelScores(
+                isolation_forest=float(if_scores[i]),
+                lstm_reconstruction_error=float(lstm_errors[i]),
+            ),
+            alert_sent=False,
+            window_size=expected,
+        ))
 
     return BatchPredictResponse(
         predictions=predictions,

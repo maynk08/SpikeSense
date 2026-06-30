@@ -106,13 +106,30 @@ def _build_windows(df: pd.DataFrame, window_size: int = WINDOW_SIZE) -> list[lis
     return [values[i: i + window_size] for i in range(len(values) - window_size + 1)]
 
 
-def _score_series(df: pd.DataFrame, series_key: str) -> dict | None:
-    """Score all windows in the series via the batch predict endpoint."""
+@st.cache_data(ttl=300, show_spinner=False)
+def _score_series_cached(series_key: str, n_rows: int) -> dict | None:
+    """Score all windows for a series via the batch endpoint (cached for 5 min).
+
+    Keyed by (series_key, n_rows) so each base series is scored only once per
+    session. ``n_rows`` busts the cache if the underlying series changes length.
+    """
+    df = _load_series(series_key)
     windows = _build_windows(df)
     if not windows:
         return None
-    with st.spinner("Scoring time-series with both models…"):
-        return api.predict_batch(windows, series_key=series_key)
+    return api.predict_batch(windows, series_key=series_key)
+
+
+def _score_series(df: pd.DataFrame, series_key: str) -> dict | None:
+    """Score all windows in the series, using the per-series cache."""
+    windows = _build_windows(df)
+    if not windows:
+        return None
+    with st.spinner(
+        f"Scoring {len(windows):,} windows with Isolation Forest + LSTM "
+        "(first time only — cached afterwards)…"
+    ):
+        return _score_series_cached(series_key, len(df))
 
 
 # ---------------------------------------------------------------------------
