@@ -1,0 +1,27 @@
+erDiagram
+    PREDICTIONS ||--o{ ALERTS : "triggers"
+
+    PREDICTIONS {
+        int id PK
+        string series_key
+        float metric_value
+        float if_score
+        float lstm_error
+        bool if_flag
+        bool lstm_flag
+        bool combined_union
+        bool combined_intersection
+        datetime created_at
+    }
+
+    ALERTS {
+        int id PK
+        int prediction_id FK
+        string series_key
+        float metric_value
+        string detected_by
+        float if_score
+        float lstm_error
+        bool sent
+        datetime created_at
+    }

@@ -1,0 +1,48 @@
+flowchart TB
+    subgraph DATA["Data Layer"]
+        direction LR
+        NAB[(NAB CSV Series<br/>AWS CloudWatch)]
+        WIN[combined_windows.json<br/>anomaly labels]
+        LD[loader.py]
+        PRE[preprocessor.py<br/>scaler + windows + features]
+        SPL[splitter.py<br/>chronological split]
+        NAB --> LD
+        WIN --> LD
+        LD --> SPL --> PRE
+    end
+
+    subgraph MODEL["Model Layer"]
+        direction LR
+        IF[Isolation Forest<br/>200 trees, 8 features]
+        LSTM[LSTM Autoencoder<br/>64-32-64, MSE threshold]
+    end
+
+    subgraph API["FastAPI Scoring Engine"]
+        direction TB
+        REG[ModelRegistry<br/>singleton]
+        EP["/predict /predict/batch<br/>/evaluate /demo/inject-spike<br/>/alerts /stats"]
+        ALERT[alerting.py<br/>Discord webhook]
+        REG --> EP
+        EP --> ALERT
+    end
+
+    DB[(SQLite<br/>predictions + alerts)]
+    DISCORD[Discord Channel]
+    DASH[Streamlit Dashboard<br/>Plotly charts + controls]
+
+    PRE --> IF
+    PRE --> LSTM
+    IF -->|joblib| REG
+    LSTM -->|keras| REG
+    EP <--> DB
+    ALERT --> DISCORD
+    DASH <-->|HTTP/JSON| EP
+
+    classDef data fill:#dbeafe,stroke:#2563eb;
+    classDef model fill:#fee2e2,stroke:#dc2626;
+    classDef api fill:#dcfce7,stroke:#16a34a;
+    classDef store fill:#fef9c3,stroke:#ca8a04;
+    class DATA data
+    class MODEL model
+    class API api
+    class DB,DISCORD store

@@ -1,0 +1,15 @@
+flowchart LR
+    analyst([Operations Analyst])
+    nab[(NAB Dataset)]
+    discord([Discord Service])
+
+    proc(((0<br/>Spike-Sense<br/>Anomaly Detection System)))
+
+    nab -->|metric series + labels| proc
+    analyst -->|window / series request| proc
+    proc -->|anomaly verdict + scores| analyst
+    proc -->|evaluation metrics| analyst
+    proc -->|alert message| discord
+
+    classDef p fill:#dcfce7,stroke:#16a34a;
+    class proc p

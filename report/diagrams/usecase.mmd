@@ -1,0 +1,27 @@
+flowchart LR
+    analyst([Operations Analyst])
+    examiner([Evaluator / Viva])
+    discord([Discord Service])
+
+    subgraph SYS["Spike-Sense System"]
+        u1((View metric<br/>dashboard))
+        u2((Score a<br/>metric window))
+        u3((Inject synthetic<br/>spike - demo))
+        u4((View evaluation<br/>metrics))
+        u5((Receive anomaly<br/>alert))
+        u6((View detection<br/>history))
+        u7((Retrain<br/>models))
+    end
+
+    analyst --- u1
+    analyst --- u2
+    analyst --- u3
+    analyst --- u6
+    analyst --- u7
+    examiner --- u1
+    examiner --- u4
+    examiner --- u3
+    u5 --- discord
+
+    classDef uc fill:#dcfce7,stroke:#16a34a;
+    class u1,u2,u3,u4,u5,u6,u7 uc

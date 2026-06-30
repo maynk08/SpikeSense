@@ -1,0 +1,32 @@
+# Core data & ML
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.7.2
+scipy==1.15.3
+joblib==1.5.3
+
+# Deep learning
+tensorflow==2.16.1
+
+# API
+fastapi==0.136.0
+uvicorn[standard]==0.45.0
+pydantic==2.13.3
+httpx==0.28.1
+
+# Persistence (detection + alert history)
+sqlalchemy==2.0.50
+
+# Dashboard
+streamlit==1.35.0
+plotly==5.22.0
+
+# HTTP utilities
+requests==2.33.1
+
+# Config
+pyyaml==6.0.1
+
+# Testing
+pytest==9.0.3
+pytest-cov==7.1.0

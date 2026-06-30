@@ -1,0 +1,95 @@
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  # NAB anomaly labels. NAB defines anomaly *windows* (time bands around each
+  # known anomaly) in combined_windows.json — the official NAB scoring labels.
+  # Every row whose timestamp falls inside a window is marked anomaly (label=1).
+  labels_file: combined_windows.json
+  # NAB files to use (relative to raw_dir); add more filenames to include more series.
+  # Series are chosen so that real labeled anomalies fall across train/val/test
+  # under a chronological split (several land in the held-out val/test windows).
+  files:
+    - realAWSCloudwatch/ec2_cpu_utilization_825cc2.csv
+    - realAWSCloudwatch/ec2_network_in_257a54.csv
+    - realAWSCloudwatch/rds_cpu_utilization_e47b3b.csv
+    - realAWSCloudwatch/rds_cpu_utilization_cc0c53.csv
+    - realKnownCause/cpu_utilization_asg_misconfiguration.csv
+    - realKnownCause/ec2_request_latency_system_failure.csv
+  timestamp_col: timestamp
+  value_col: value
+  label_col: label   # 0=normal, 1=anomaly
+  split:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+    random_seed: 42
+
+preprocessing:
+  window_size: 30         # number of time steps per sliding window
+  stride: 1               # step size between consecutive windows
+  scaler: minmax          # options: minmax | standard
+  # Statistical features computed per window for Isolation Forest
+  window_features:
+    - mean
+    - std
+    - min
+    - max
+    - skew
+    - kurtosis
+    - range
+    - rms
+
+spike_injection:
+  point_spike:
+    magnitude_sigma: 4.0   # how many std deviations above rolling mean
+    rolling_window: 50
+  level_shift:
+    duration: 20           # number of time steps for the shift
+    magnitude_sigma: 3.0
+  trend_drift:
+    duration: 50           # number of time steps for the drift
+    slope_sigma: 0.05      # per-step increase as fraction of series std
+
+isolation_forest:
+  n_estimators: 200
+  contamination: 0.05      # estimated fraction of anomalies in training data
+  max_features: 1.0
+  random_state: 42
+  # Contamination values to sweep during cross-validation
+  contamination_sweep: [0.01, 0.03, 0.05, 0.08, 0.10, 0.15]
+
+lstm:
+  window_size: 30          # must match preprocessing.window_size
+  encoder_units: 64
+  bottleneck_units: 32
+  decoder_units: 64
+  dropout: 0.1
+  epochs: 50
+  batch_size: 32
+  learning_rate: 0.001
+  # Percentile of train reconstruction errors used to set anomaly threshold
+  threshold_percentile: 99
+  # Early stopping patience (epochs without val loss improvement)
+  early_stopping_patience: 5
+  random_seed: 42
+
+evaluation:
+  results_dir: results
+  # Combined signal strategy: union (OR) or intersection (AND)
+  combination_strategy: union
+  # Minimum anomaly score magnitude to include in alert
+  alert_score_min: 0.0
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  # Alert cooldown in seconds to prevent alert flooding
+  alert_cooldown_seconds: 60
+  models_dir: models
+  # SQLite database for detection + alert history (overridable via SPIKE_SENSE_DB_URL)
+  db_path: data/spike_sense.db
+
+dashboard:
+  api_base_url: http://localhost:8000   # overridden by env var SPIKE_SENSE_API_URL in production
+  page_title: "Spike-Sense | Cloud Anomaly Monitor"
+  default_dataset: realAWSCloudwatch/ec2_cpu_utilization_825cc2.csv

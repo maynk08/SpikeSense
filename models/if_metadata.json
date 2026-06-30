@@ -1,0 +1,15 @@
+{
+  "contamination": 0.05,
+  "n_estimators": 200,
+  "max_features": 1.0,
+  "feature_names": [
+    "mean",
+    "std",
+    "min",
+    "max",
+    "range",
+    "rms",
+    "skew",
+    "kurtosis"
+  ]
+}

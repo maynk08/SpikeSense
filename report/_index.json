@@ -1,0 +1,126 @@
+{
+  "figures": [
+    [
+      "Figure 1.1",
+      "High-level architecture of Spike-Sense, showing the data, model, service and presentation layers and the flow of telemetry from raw CSV series to dashboard, database and alerts."
+    ],
+    [
+      "Figure 2.1",
+      "A real NAB series, cpu_utilization_asg_misconfiguration, with its officially labelled anomaly window shown in red. The labelled fault falls in the final portion of the timeline, which under a chronological split becomes the held-out test data."
+    ],
+    [
+      "Figure 3.1",
+      "Use-case diagram showing the operations analyst and evaluator actors, the external Discord service, and the use cases provided within the Spike-Sense system boundary."
+    ],
+    [
+      "Figure 3.2",
+      "Level-0 (context) data-flow diagram. The system is a single process exchanging data with the NAB dataset, the analyst, and the Discord service."
+    ],
+    [
+      "Figure 3.3",
+      "Level-1 data-flow diagram decomposing the system into its six processes and four data stores."
+    ],
+    [
+      "Figure 4.1",
+      "Class diagram of the principal classes and structured records, including the model registry, the preprocessing and split records, the alert-state tracker, and the two persisted entities."
+    ],
+    [
+      "Figure 4.2",
+      "Entity–relationship diagram of the persistence layer. The PREDICTIONS entity is related one-to-many to the ALERTS entity through the prediction_id foreign key."
+    ],
+    [
+      "Figure 4.3",
+      "Sequence diagram of single-window scoring, from the dashboard request through scaling, both models, combination, persistence and alerting, to the response."
+    ],
+    [
+      "Figure 4.4",
+      "Sequence diagram of the spike-injection demonstration, showing injection, preprocessing, batch scoring and persistence of the triggering detection."
+    ],
+    [
+      "Figure 4.5",
+      "Activity diagram of the training pipeline, from per-series preprocessing through aggregation to the training and persistence of both models."
+    ],
+    [
+      "Figure 5.1",
+      "Automatically generated Swagger (OpenAPI) documentation of the Spike-Sense REST API, showing the System, History, Inference, Evaluation and Demo endpoint groups and the data schemas."
+    ],
+    [
+      "Figure 5.2",
+      "The Spike-Sense dashboard displaying a real EC2 CPU series. The top panel shows the metric with ground-truth anomalies; the lower panels show the two detectors’ signals."
+    ],
+    [
+      "Figure 5.3",
+      "The dashboard after injecting a point spike. The detectors flag the injected region; the lower panels show the corresponding rise in Isolation Forest score and LSTM reconstruction error."
+    ],
+    [
+      "Figure 5.4",
+      "JSON response of the /alerts endpoint, listing recent persisted alerts with their detecting models and delivery status."
+    ],
+    [
+      "Figure 7.1",
+      "LSTM Autoencoder training and validation loss per epoch. The best validation loss is reached at epoch six, where early stopping halts training."
+    ],
+    [
+      "Figure 7.2",
+      "Test-set precision, recall and F1-score for the four configurations. The union ensemble attains the highest F1 and recall."
+    ],
+    [
+      "Figure 7.3",
+      "Confusion matrices for the four configurations on the test set, showing the true/false positive and negative counts behind the headline metrics."
+    ],
+    [
+      "Figure 7.4",
+      "Precision–recall curves for the four configurations with their average-precision (AP) scores. The combined configurations achieve the highest AP."
+    ],
+    [
+      "Figure 7.5",
+      "Isolation Forest performance on validation data as the contamination parameter varies; lower values trade recall for substantially higher precision."
+    ],
+    [
+      "Figure 7.6",
+      "LSTM Autoencoder performance on validation data as the threshold percentile varies, showing the precision–recall trade-off the threshold controls."
+    ],
+    [
+      "Figure 7.7",
+      "Recall of each configuration on injected synthetic anomalies. The Isolation Forest detects point and level-shift anomalies with perfect recall and trend drift strongly."
+    ],
+    [
+      "Figure 7.8",
+      "The dashboard’s evaluation panel, showing the live test-set performance table together with the metric and detector charts."
+    ]
+  ],
+  "tables": [
+    [
+      "Table 2.1",
+      "Comparison of the two detectors adopted in Spike-Sense."
+    ],
+    [
+      "Table 3.1",
+      "Functional requirements of the Spike-Sense system."
+    ],
+    [
+      "Table 4.1",
+      "Database schema: columns of the predictions and alerts tables."
+    ],
+    [
+      "Table 4.2",
+      "REST API endpoints exposed by the FastAPI service layer."
+    ],
+    [
+      "Table 5.1",
+      "Tools and technologies used in the implementation, with versions and roles."
+    ],
+    [
+      "Table 6.1",
+      "Representative test cases and their outcomes (selected from 114 automated tests)."
+    ],
+    [
+      "Table 7.1",
+      "Test-set performance of the four detector configurations on 5,564 windows."
+    ],
+    [
+      "Table 10.1",
+      "Principal configuration parameters."
+    ]
+  ]
+}

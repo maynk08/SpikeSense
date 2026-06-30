@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Environment / secrets
+.env
+.env.local
+*.env
+
+# Model artifacts (large binaries — committed intentionally in models/)
+# Uncomment below if models grow too large for Git:
+# *.h5
+# *.keras
+# *.joblib
+
+# Data — raw and processed data committed intentionally
+# Add exclusions here only if data files become large:
+# data/raw/*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node / npm (mermaid CLI tooling, etc.)
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# Local backups / scratch
+.backup/
+*.bak
+*.tmp
+*.orig
+
+# Render / deployment artifacts
+*.log

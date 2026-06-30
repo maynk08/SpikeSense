@@ -1,0 +1,13 @@
+# Dependencies for the Streamlit Community Cloud deployment of dashboard/app.py.
+# This is intentionally lighter than requirements.txt — no TensorFlow or FastAPI.
+# The dashboard only loads local data files and calls the Render API over HTTP.
+
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.7.2
+scipy==1.15.3
+joblib==1.5.3
+streamlit==1.35.0
+plotly==5.22.0
+requests==2.33.1
+pyyaml==6.0.1

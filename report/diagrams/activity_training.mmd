@@ -1,0 +1,22 @@
+flowchart TD
+    start([Start training]) --> load[Load all NAB series<br/>+ window labels]
+    load --> loop{For each series}
+    loop --> split[Chronological split<br/>70 / 15 / 15]
+    split --> fit[Fit MinMax scaler<br/>on train only]
+    fit --> window[Create sliding windows<br/>+ extract 8 features]
+    window --> save[Save processed arrays]
+    save --> loop
+    loop -->|all done| agg[Aggregate train/val<br/>windows across series]
+
+    agg --> ifsweep[IF contamination sweep<br/>on validation]
+    ifsweep --> iftrain[Train Isolation Forest<br/>contamination = 0.05]
+    iftrain --> ifsave[(Save isolation_forest.joblib)]
+
+    agg --> normal[Filter normal-only<br/>windows label=0]
+    normal --> lstmtrain[Train LSTM Autoencoder<br/>early stopping on val_loss]
+    lstmtrain --> thr[Compute 99th-pct<br/>error threshold]
+    thr --> tsweep[Threshold percentile sweep]
+    tsweep --> lstmsave[(Save lstm_autoencoder.keras)]
+
+    ifsave --> done([Artifacts ready])
+    lstmsave --> done

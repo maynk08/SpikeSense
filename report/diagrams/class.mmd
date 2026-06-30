@@ -1,0 +1,57 @@
+classDiagram
+    class ModelRegistry {
+        +if_model: IsolationForest
+        +lstm_model: keras.Model
+        +lstm_threshold: float
+        +scalers: dict
+        +window_size: int
+        +loaded: bool
+        +load()
+        +get_scaler(series_key)
+        +series_keys()
+    }
+
+    class PreprocessedData {
+        +windows: ndarray
+        +windows_3d: ndarray
+        +features: ndarray
+        +labels: ndarray
+        +timestamps: ndarray
+    }
+
+    class SeriesSplit {
+        +train: DataFrame
+        +val: DataFrame
+        +test: DataFrame
+    }
+
+    class AlertState {
+        +last_alert_time: float
+        +total_sent: int
+        +total_skipped: int
+    }
+
+    class Prediction {
+        +id: int
+        +series_key: str
+        +metric_value: float
+        +if_score: float
+        +lstm_error: float
+        +combined_union: bool
+        +created_at: datetime
+    }
+
+    class Alert {
+        +id: int
+        +prediction_id: int
+        +series_key: str
+        +detected_by: str
+        +sent: bool
+        +created_at: datetime
+    }
+
+    ModelRegistry --> PreprocessedData : produces at inference
+    PreprocessedData ..> SeriesSplit : derived from
+    Prediction "1" --> "0..*" Alert : triggers
+    ModelRegistry ..> Prediction : logs
+    AlertState ..> Alert : gates via cooldown

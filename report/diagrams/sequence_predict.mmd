@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor User
+    participant D as Streamlit Dashboard
+    participant A as FastAPI /predict
+    participant R as ModelRegistry
+    participant IF as Isolation Forest
+    participant L as LSTM Autoencoder
+    participant DB as SQLite
+    participant W as Discord Webhook
+
+    User->>D: Select series & request scoring
+    D->>A: POST /predict {window, series_key}
+    A->>R: get_scaler(series_key)
+    R-->>A: fitted MinMax scaler
+    A->>A: scale window, extract 8 features
+    A->>IF: score(features)
+    IF-->>A: anomaly score + flag
+    A->>L: score(window_3d)
+    L-->>A: reconstruction error + flag
+    A->>A: combine (union / intersection)
+    alt anomaly detected (union)
+        A->>DB: log_prediction(...)
+        A->>W: fire_alert() if cooldown elapsed
+        A->>DB: log_alert(prediction_id, sent)
+    end
+    A-->>D: PredictResponse {flags, scores, alert_sent}
+    D-->>User: Render anomaly markers on chart

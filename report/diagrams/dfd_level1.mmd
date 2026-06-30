@@ -1,0 +1,33 @@
+flowchart TB
+    analyst([Analyst])
+    nab[(NAB CSV + windows)]
+    discord([Discord])
+
+    p1[1.0<br/>Load & Label]
+    p2[2.0<br/>Preprocess<br/>scale + window + features]
+    p3[3.0<br/>Score<br/>IF + LSTM]
+    p4[4.0<br/>Combine & Decide]
+    p5[5.0<br/>Alert & Persist]
+    p6[6.0<br/>Evaluate & Report]
+
+    d1[(Processed Arrays)]
+    d2[(Model Artifacts)]
+    d3[(SQLite: predictions/alerts)]
+    d4[(results/*.json)]
+
+    nab --> p1 --> p2
+    p2 --> d1
+    p2 --> p3
+    d2 --> p3
+    p3 --> p4 --> p5
+    p5 --> d3
+    p5 --> discord
+    analyst -->|request| p3
+    p4 -->|verdict| analyst
+    d1 --> p6
+    d2 --> p6
+    p6 --> d4
+    d4 -->|metrics| analyst
+
+    classDef p fill:#dcfce7,stroke:#16a34a;
+    class p1,p2,p3,p4,p5,p6 p

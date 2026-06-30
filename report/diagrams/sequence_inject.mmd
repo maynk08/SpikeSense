@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor User
+    participant D as Dashboard
+    participant A as FastAPI /demo/inject-spike
+    participant S as spike_injector
+    participant P as preprocessor
+    participant M as IF + LSTM
+    participant DB as SQLite
+
+    User->>D: Choose mode, magnitude, duration
+    D->>A: POST /demo/inject-spike {series_key, mode, ...}
+    A->>S: make_clean_copy(series)
+    A->>S: inject_spike(mid-series, mode)
+    S-->>A: modified series + ground-truth labels
+    A->>P: scale + create_windows + features
+    P-->>A: windows, features, window_3d
+    A->>M: score full series (batch)
+    M-->>A: per-window scores + flags
+    A->>DB: log_prediction + log_alert (first detection)
+    A-->>D: SpikeInjectionResponse {predictions, n_anomalous}
+    D-->>User: Show injected anomaly detected on chart

@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: spike-sense-api
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DISCORD_WEBHOOK_URL
+        sync: false          # set manually in Render dashboard — never commit the real URL
+      - key: PYTHON_VERSION
+        value: "3.11"
+    healthCheckPath: /health
