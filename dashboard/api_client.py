@@ -19,6 +19,14 @@ logger = logging.getLogger(__name__)
 # Default points at the local dev server.
 _DEFAULT_BASE_URL = "http://localhost:8000"
 
+# Deployment mode:
+#   - If SPIKE_SENSE_API_URL is set, the dashboard talks to a remote FastAPI
+#     backend over HTTP (the original two-service architecture).
+#   - If it is NOT set, the dashboard scores models in-process via
+#     dashboard.local_scoring (single-service deploy, e.g. Streamlit Cloud).
+# This lets the same code run standalone for demos and against an API in prod.
+_USE_LOCAL = "SPIKE_SENSE_API_URL" not in os.environ
+
 
 def _base_url() -> str:
     return os.environ.get("SPIKE_SENSE_API_URL", _DEFAULT_BASE_URL).rstrip("/")
@@ -61,19 +69,17 @@ def health() -> dict | None:
 
 def info() -> dict | None:
     """GET /info"""
+    if _USE_LOCAL:
+        from dashboard import local_scoring
+        return local_scoring.info()
     return _get("/info")
-
-
-def predict(window: list[float], series_key: str | None = None) -> dict | None:
-    """POST /predict"""
-    payload: dict = {"window": window}
-    if series_key:
-        payload["series_key"] = series_key
-    return _post("/predict", payload)
 
 
 def predict_batch(windows: list[list[float]], series_key: str | None = None) -> dict | None:
     """POST /predict/batch"""
+    if _USE_LOCAL:
+        from dashboard import local_scoring
+        return local_scoring.predict_batch(windows, series_key=series_key)
     payload: dict = {"windows": windows}
     if series_key:
         payload["series_key"] = series_key
@@ -82,6 +88,9 @@ def predict_batch(windows: list[list[float]], series_key: str | None = None) -> 
 
 def evaluate() -> dict | None:
     """GET /evaluate"""
+    if _USE_LOCAL:
+        from dashboard import local_scoring
+        return local_scoring.evaluate()
     return _get("/evaluate")
 
 
@@ -92,6 +101,9 @@ def inject_spike(
     duration: int = 20,
 ) -> dict | None:
     """POST /demo/inject-spike"""
+    if _USE_LOCAL:
+        from dashboard import local_scoring
+        return local_scoring.inject_spike(series_key, mode, magnitude_sigma, duration)
     return _post("/demo/inject-spike", {
         "series_key": series_key,
         "mode": mode,
@@ -101,5 +113,8 @@ def inject_spike(
 
 
 def is_reachable() -> bool:
+    if _USE_LOCAL:
+        from dashboard import local_scoring
+        return local_scoring.is_reachable()
     result = health()
     return result is not None and result.get("status") == "ok"
