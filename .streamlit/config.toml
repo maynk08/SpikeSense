@@ -7,3 +7,13 @@ textColor = "#e2e8f0"
 
 [server]
 headless = true
+# Behind Hugging Face Spaces' reverse proxy the websocket handshake can race,
+# producing transient "Tried to use SessionInfo before it was initialized"
+# errors. Disabling CORS/XSRF protection (safe for a public read-only demo)
+# and enabling websocket compression make the proxied connection more robust.
+enableCORS = false
+enableXsrfProtection = false
+enableWebsocketCompression = true
+
+[browser]
+gatherUsageStats = false
