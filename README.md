@@ -21,9 +21,13 @@ Spike-Sense ingests real AWS CloudWatch time-series data, applies two complement
 
 | Component | URL |
 |---|---|
-| 📊 Dashboard | *(Streamlit Cloud — add after deployment)* |
-| 🔌 API | *(Render.com — add after deployment)* |
-| 📖 API Docs (Swagger) | `<api-url>/docs` |
+| 📊 Dashboard | **https://huggingface.co/spaces/maynk089/SpikeSense** |
+
+Deployed on Hugging Face Spaces as a single self-contained service — the
+dashboard scores the models in-process, so no separate API is needed.
+
+> The free Space sleeps after ~48 h of inactivity; the first visit after that
+> wakes it in under a minute.
 
 ---
 
@@ -167,8 +171,8 @@ spike-sense/
 
 ```bash
 # 1. Clone and enter project
-git clone https://github.com/<your-username>/spike-sense.git
-cd spike-sense
+git clone https://github.com/maynk08/SpikeSense.git
+cd SpikeSense
 
 # 2. Create virtual environment and install
 python3 -m venv .venv && source .venv/bin/activate
