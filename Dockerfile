@@ -10,11 +10,14 @@
 FROM python:3.11-slim
 
 # Streamlit serves on 7860 — the port Hugging Face Spaces expects.
+# PATH includes ~/.local/bin because pip (run as the non-root user) installs
+# console scripts like `streamlit` there.
 ENV PORT=7860 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     # HF mounts the app at /home/user/app; keep caches writable there.
     HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH \
     STREAMLIT_SERVER_HEADLESS=true \
     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 
@@ -36,7 +39,8 @@ EXPOSE 7860
 
 # NOTE: SPIKE_SENSE_API_URL is intentionally NOT set, so api_client.py uses
 # in-process scoring (dashboard/local_scoring.py) — no backend needed.
-CMD ["streamlit", "run", "dashboard/app.py", \
+# Invoke via `python -m streamlit` so it works regardless of PATH resolution.
+CMD ["python", "-m", "streamlit", "run", "dashboard/app.py", \
      "--server.port=7860", \
      "--server.address=0.0.0.0", \
      "--server.headless=true"]
