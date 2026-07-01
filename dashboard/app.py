@@ -125,10 +125,7 @@ def _score_series(df: pd.DataFrame, series_key: str) -> dict | None:
     windows = _build_windows(df)
     if not windows:
         return None
-    with st.spinner(
-        f"Scoring {len(windows):,} windows with Isolation Forest + LSTM "
-        "(first time only — cached afterwards)…"
-    ):
+    with st.spinner("Analysing the series with both models…"):
         return _score_series_cached(series_key, len(df))
 
 
@@ -226,15 +223,26 @@ def _make_main_chart(
         )
 
     fig.update_layout(
-        height=600,
+        height=620,
         template="plotly_dark",
         paper_bgcolor="#0f172a",
         plot_bgcolor="#0f172a",
         font=dict(color="#e2e8f0"),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(l=0, r=0, t=40, b=0),
+        # Legend sits above the plot on the left; the modebar (zoom/pan) floats
+        # top-right, so keeping the legend left-aligned avoids overlap with it.
+        legend=dict(orientation="h", yanchor="bottom", y=1.06, xanchor="left", x=0),
+        # Generous top margin so the subplot titles, legend and the hover
+        # modebar all have room and never touch each other.
+        margin=dict(l=10, r=10, t=90, b=10),
         hovermode="x unified",
+        # Push the modebar clear of the plot and make it always visible so it
+        # never appears to "pop over" the titles on hover.
+        modebar=dict(orientation="v", bgcolor="rgba(0,0,0,0)"),
     )
+    # Nudge the subplot titles down slightly and shrink them so they don't
+    # crowd the legend / modebar band at the top.
+    for ann in fig.layout.annotations:
+        ann.font = dict(size=13, color="#94a3b8")
     fig.update_xaxes(gridcolor="#1e293b", showgrid=True)
     fig.update_yaxes(gridcolor="#1e293b", showgrid=True)
     return fig
@@ -400,15 +408,38 @@ def main() -> None:
         st.session_state["spike_results"] = None
         st.session_state["last_series_key"] = series_key
 
-    if st.session_state["cached_df"] is None:
-        with st.spinner(f"Loading {SERIES_LABELS.get(series_key, series_key)}…"):
-            st.session_state["cached_df"] = _load_series(series_key)
+    # Show any heavy loading/scoring work as a prominent status panel *in the
+    # main content area*, so it is impossible to miss — rather than relying on
+    # Streamlit's small top-right "Running" indicator while the page dims.
+    needs_load = st.session_state["cached_df"] is None
+    needs_score = (
+        api_ok
+        and st.session_state["batch_results"] is None
+        and st.session_state["spike_results"] is None
+    )
+
+    load_panel = st.empty()
+    if needs_load or needs_score:
+        with load_panel.container():
+            st.info(
+                f"⚙️ Preparing **{SERIES_LABELS.get(series_key, series_key)}** — "
+                "loading the metric series and analysing it with both models. "
+                "This takes a few seconds.",
+                icon="⏳",
+            )
+            st.progress(0.4, text="Working…")
+
+    if needs_load:
+        st.session_state["cached_df"] = _load_series(series_key)
 
     df: pd.DataFrame = st.session_state["cached_df"]
 
     # Auto-score on first load
-    if api_ok and st.session_state["batch_results"] is None and st.session_state["spike_results"] is None:
+    if needs_score:
         st.session_state["batch_results"] = _score_series(df, series_key)
+
+    # Clear the loading panel now that data + scores are ready.
+    load_panel.empty()
 
     # Determine which results to show
     if st.session_state["spike_results"]:
@@ -426,7 +457,17 @@ def main() -> None:
 
     # Main chart
     fig = _make_main_chart(df, batch, model_filter)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        config={
+            # Keep the zoom/pan toolbar always visible and docked vertically on
+            # the right so it never pops over the chart titles on hover.
+            "displayModeBar": True,
+            "displaylogo": False,
+            "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+        },
+    )
 
     # Stats below chart
     if batch:
